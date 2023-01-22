@@ -1,0 +1,12 @@
+[package]
+name = "serde-google-sheets"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = "1.0.147"
+smallmap = "1.4.0"
+
+[dependencies.google-sheets4]
+git = "https://github.com/fiadliel/google-apis-rs.git"
+branch = "regen"
