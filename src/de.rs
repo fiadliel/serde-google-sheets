@@ -28,7 +28,12 @@ pub async fn from_spreadsheet<T>(
 where
     T: DeserializeOwned,
 {
-    let spreadsheet = sheets.spreadsheets().get(spreadsheet_id).doit().await?;
+    let spreadsheet = sheets
+        .spreadsheets()
+        .get(spreadsheet_id)
+        .include_grid_data(true)
+        .doit()
+        .await?;
 
     let grid_data = spreadsheet
         .1
