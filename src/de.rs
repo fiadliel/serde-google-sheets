@@ -2,7 +2,14 @@ use std::iter::Peekable;
 
 use crate::error::{Error, Result};
 use google_sheets4::api::{CellData, ExtendedValue, GridData};
-use serde::de::{self, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor};
+use google_sheets4::client::GetToken;
+use google_sheets4::hyper::client::HttpConnector;
+use google_sheets4::hyper::Client;
+use google_sheets4::hyper_rustls::HttpsConnector;
+use serde::de::{
+    self, DeserializeOwned, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess,
+    Visitor,
+};
 use serde::Deserialize;
 
 pub struct Deserializer<'de, I>
@@ -14,6 +21,34 @@ where
     key_idx: Option<usize>,
     cur_type: Option<&'de str>,
     parsing_enum: bool,
+}
+
+pub async fn from_spreadsheet<T>(
+    client: Client<HttpsConnector<HttpConnector>>,
+    auth: impl GetToken + 'static,
+    spreadsheet_id: &str,
+) -> Result<T>
+where
+    T: DeserializeOwned,
+{
+    let sheets = google_sheets4::Sheets::new(client, auth);
+
+    let spreadsheet = sheets.spreadsheets().get(spreadsheet_id).doit().await?;
+
+    let grid_data = spreadsheet
+        .1
+        .sheets
+        .as_ref()
+        .ok_or(Error::MissingSheet)?
+        .get(0)
+        .ok_or(Error::MissingSheet)?
+        .data
+        .as_ref()
+        .ok_or(Error::NotGridSheet)?
+        .get(0)
+        .ok_or(Error::NotGridSheet)?;
+
+    from_grid_data(grid_data)
 }
 
 pub fn from_grid_data<'a, T>(grid_data: &'a GridData) -> Result<T>

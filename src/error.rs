@@ -6,6 +6,12 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
+    GoogleSheetsError(google_sheets4::Error),
+
+    MissingSheet,
+
+    NotGridSheet,
+
     // There must be at least one row which acts as the heading row when the
     // deserializer needs to match field names to columns.
     ZeroRows,
@@ -31,6 +37,12 @@ pub enum Error {
     Eof,
 }
 
+impl From<google_sheets4::Error> for Error {
+    fn from(value: google_sheets4::Error) -> Self {
+        Error::GoogleSheetsError(value)
+    }
+}
+
 impl de::Error for Error {
     fn custom<T: Display>(msg: T) -> Self {
         Error::Message(msg.to_string())
@@ -47,6 +59,11 @@ impl Display for Error {
             Error::MissingValue => formatter.write_str("expected value but it wasn't present"),
             Error::NotNumber => formatter.write_str("expected number value"),
             Error::NotBool => formatter.write_str("expected bool value"),
+            Error::GoogleSheetsError(err) => {
+                formatter.write_fmt(format_args!("google_sheets error: {}", err))
+            }
+            Error::MissingSheet => formatter.write_str("sheet 0 not found in spreadsheet"),
+            Error::NotGridSheet => formatter.write_str("spreadsheet is not a grid sheet"),
             /* and so forth */
         }
     }
