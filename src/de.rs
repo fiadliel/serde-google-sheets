@@ -2,9 +2,7 @@ use std::iter::Peekable;
 
 use crate::error::{Error, Result};
 use google_sheets4::api::{CellData, ExtendedValue, GridData};
-use google_sheets4::client::GetToken;
 use google_sheets4::hyper::client::HttpConnector;
-use google_sheets4::hyper::Client;
 use google_sheets4::hyper_rustls::HttpsConnector;
 use serde::de::{
     self, DeserializeOwned, DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess,
@@ -24,15 +22,12 @@ where
 }
 
 pub async fn from_spreadsheet<T>(
-    client: Client<HttpsConnector<HttpConnector>>,
-    auth: impl GetToken + 'static,
+    sheets: &google_sheets4::Sheets<HttpsConnector<HttpConnector>>,
     spreadsheet_id: &str,
 ) -> Result<T>
 where
     T: DeserializeOwned,
 {
-    let sheets = google_sheets4::Sheets::new(client, auth);
-
     let spreadsheet = sheets.spreadsheets().get(spreadsheet_id).doit().await?;
 
     let grid_data = spreadsheet
