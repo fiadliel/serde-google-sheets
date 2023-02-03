@@ -438,10 +438,16 @@ where
             return Ok(None);
         }
 
-        self.key_idx = Some(new_idx);
-        self.cur_type = Some(self.types.get(&new_idx).unwrap().unwrap());
+        match self.types.get(&new_idx) {
+            Some(Some(v)) => {
+                self.key_idx = Some(new_idx);
+                self.cur_type = Some(v);
 
-        seed.deserialize(&mut *self).map(Some)
+                seed.deserialize(&mut *self).map(Some)
+            },
+            _ => Ok(None),
+
+        }
     }
 
     fn next_value_seed<V>(&mut self, seed: V) -> Result<V::Value>
