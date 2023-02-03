@@ -103,11 +103,11 @@ where
     }
 
     fn deserialize_number(&mut self) -> Result<f64> {
-        let value = self
-            .get_cur_effective_value()
-            .ok_or(Error::MissingValue)?
+        let effective_value = self.get_cur_effective_value().ok_or(Error::MissingValue)?;
+
+        let value = effective_value
             .number_value
-            .ok_or(Error::NotNumber)?;
+            .ok_or(Error::NotNumber(effective_value.string_value.clone()))?;
 
         Ok(value)
     }
@@ -444,9 +444,8 @@ where
                 self.cur_type = Some(v);
 
                 seed.deserialize(&mut *self).map(Some)
-            },
+            }
             _ => Ok(None),
-
         }
     }
 

@@ -20,7 +20,7 @@ pub enum Error {
 
     MissingValue,
 
-    NotNumber,
+    NotNumber(Option<String>),
 
     NotBool,
 
@@ -57,7 +57,9 @@ impl Display for Error {
             Error::Message(msg) => formatter.write_str(msg),
             Error::Eof => formatter.write_str("unexpected end of input"),
             Error::MissingValue => formatter.write_str("expected value but it wasn't present"),
-            Error::NotNumber => formatter.write_str("expected number value"),
+            Error::NotNumber(s) => {
+                formatter.write_fmt(format_args!("expected number value, found {:?}", s))
+            }
             Error::NotBool => formatter.write_str("expected bool value"),
             Error::GoogleSheetsError(err) => {
                 formatter.write_fmt(format_args!("google_sheets error: {}", err))
