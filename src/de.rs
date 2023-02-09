@@ -123,7 +123,12 @@ where
     fn deserialize_bool(&mut self) -> Result<bool> {
         let value = self
             .get_cur_effective_value()
-            .ok_or(Error::MissingValue(String::new()))?
+            .ok_or(Error::MissingValue(format!(
+                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                self.key_idx,
+                self.rows.peek(),
+                self.types
+            )))?
             .bool_value
             .ok_or(Error::NotBool)?;
 
@@ -132,10 +137,20 @@ where
 
     fn deserialize_formatted_value(&mut self) -> Result<&'de str> {
         self.get_cur_cell_data()
-            .ok_or(Error::MissingValue(String::new()))?
+            .ok_or(Error::MissingValue(format!(
+                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                self.key_idx,
+                self.rows.peek(),
+                self.types
+            )))?
             .formatted_value
             .as_deref()
-            .ok_or(Error::MissingValue(String::new()))
+            .ok_or(Error::MissingValue(format!(
+                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                self.key_idx,
+                self.rows.peek(),
+                self.types
+            )))
     }
 }
 
@@ -279,7 +294,12 @@ where
         let value = self
             .get_cur_cell_data()
             .and_then(|v| v.formatted_value.as_deref())
-            .ok_or(Error::MissingValue(String::new()))?;
+            .ok_or(Error::MissingValue(format!(
+                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                self.key_idx,
+                self.rows.peek(),
+                self.types
+            )))?;
 
         visitor.visit_borrowed_str(value)
     }
@@ -405,11 +425,21 @@ where
             let value = self
                 .get_cur_cell_data()
                 .and_then(|v| v.formatted_value.as_deref())
-                .ok_or(Error::MissingValue(String::new()))?;
+                .ok_or(Error::MissingValue(format!(
+                    "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                    self.key_idx,
+                    self.rows.peek(),
+                    self.types
+                )))?;
 
             visitor.visit_borrowed_str(value)
         } else {
-            visitor.visit_borrowed_str(self.cur_type.ok_or(Error::MissingValue(String::new()))?)
+            visitor.visit_borrowed_str(self.cur_type.ok_or(Error::MissingValue(format!(
+                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                self.key_idx,
+                self.rows.peek(),
+                self.types
+            )))?)
         }
     }
 
