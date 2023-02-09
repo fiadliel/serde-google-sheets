@@ -17,6 +17,7 @@ where
     rows: Peekable<I>,
     types: smallmap::Map<usize, Option<&'de str>>,
     key_idx: Option<usize>,
+    row_idx: u32,
     cur_type: Option<&'de str>,
     parsing_enum: bool,
 }
@@ -74,6 +75,7 @@ where
         rows: rows.peekable(),
         types,
         key_idx: None,
+        row_idx: 1,
         cur_type: None,
         parsing_enum: false,
     };
@@ -107,9 +109,10 @@ where
         let effective_value =
             self.get_cur_effective_value()
                 .ok_or(Error::MissingValue(format!(
-                    "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                    "Key idx: {:?}, Row idx {:?}, Next {:?}, Types: {:?}",
                     self.key_idx,
-                    self.rows.peek(),
+                    self.row_idx,
+                    self.rows.peek().and_then(|row| row.get(0)),
                     self.types
                 )))?;
 
@@ -124,9 +127,10 @@ where
         let value = self
             .get_cur_effective_value()
             .ok_or(Error::MissingValue(format!(
-                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                "Key idx: {:?}, Row idx {:?}, Next {:?}, Types: {:?}",
                 self.key_idx,
-                self.rows.peek(),
+                self.row_idx,
+                self.rows.peek().and_then(|row| row.get(0)),
                 self.types
             )))?
             .bool_value
@@ -138,17 +142,19 @@ where
     fn deserialize_formatted_value(&mut self) -> Result<&'de str> {
         self.get_cur_cell_data()
             .ok_or(Error::MissingValue(format!(
-                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                "Key idx: {:?}, Row idx {:?}, Next {:?}, Types: {:?}",
                 self.key_idx,
-                self.rows.peek(),
+                self.row_idx,
+                self.rows.peek().and_then(|row| row.get(0)),
                 self.types
             )))?
             .formatted_value
             .as_deref()
             .ok_or(Error::MissingValue(format!(
-                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                "Key idx: {:?}, Row idx {:?}, Next {:?}, Types: {:?}",
                 self.key_idx,
-                self.rows.peek(),
+                self.row_idx,
+                self.rows.peek().and_then(|row| row.get(0)),
                 self.types
             )))
     }
@@ -295,9 +301,10 @@ where
             .get_cur_cell_data()
             .and_then(|v| v.formatted_value.as_deref())
             .ok_or(Error::MissingValue(format!(
-                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                "Key idx: {:?}, Row idx {:?}, Next {:?}, Types: {:?}",
                 self.key_idx,
-                self.rows.peek(),
+                self.row_idx,
+                self.rows.peek().and_then(|row| row.get(0)),
                 self.types
             )))?;
 
@@ -426,18 +433,20 @@ where
                 .get_cur_cell_data()
                 .and_then(|v| v.formatted_value.as_deref())
                 .ok_or(Error::MissingValue(format!(
-                    "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                    "Key idx: {:?}, Row idx {:?}, Next {:?}, Types: {:?}",
                     self.key_idx,
-                    self.rows.peek(),
+                    self.row_idx,
+                    self.rows.peek().and_then(|row| row.get(0)),
                     self.types
                 )))?;
 
             visitor.visit_borrowed_str(value)
         } else {
             visitor.visit_borrowed_str(self.cur_type.ok_or(Error::MissingValue(format!(
-                "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                "Key idx: {:?}, Row idx {:?}, Next {:?}, Types: {:?}",
                 self.key_idx,
-                self.rows.peek(),
+                self.row_idx,
+                self.rows.peek().and_then(|row| row.get(0)),
                 self.types
             )))?)
         }
@@ -515,6 +524,7 @@ where
         let val = seed.deserialize(&mut *self).map(Some);
 
         self.rows.next();
+        self.row_idx += 1;
 
         val
     }
