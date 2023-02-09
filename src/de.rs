@@ -104,7 +104,14 @@ where
     }
 
     fn deserialize_number(&mut self) -> Result<f64> {
-        let effective_value = self.get_cur_effective_value().ok_or(Error::MissingValue)?;
+        let effective_value =
+            self.get_cur_effective_value()
+                .ok_or(Error::MissingValue(format!(
+                    "Key idx: {:?}, Cur row data: {:?}, Types: {:?}",
+                    self.key_idx,
+                    self.rows.peek(),
+                    self.types
+                )))?;
 
         let value = effective_value
             .number_value
@@ -116,7 +123,7 @@ where
     fn deserialize_bool(&mut self) -> Result<bool> {
         let value = self
             .get_cur_effective_value()
-            .ok_or(Error::MissingValue)?
+            .ok_or(Error::MissingValue(String::new()))?
             .bool_value
             .ok_or(Error::NotBool)?;
 
@@ -125,10 +132,10 @@ where
 
     fn deserialize_formatted_value(&mut self) -> Result<&'de str> {
         self.get_cur_cell_data()
-            .ok_or(Error::MissingValue)?
+            .ok_or(Error::MissingValue(String::new()))?
             .formatted_value
             .as_deref()
-            .ok_or(Error::MissingValue)
+            .ok_or(Error::MissingValue(String::new()))
     }
 }
 
@@ -272,7 +279,7 @@ where
         let value = self
             .get_cur_cell_data()
             .and_then(|v| v.formatted_value.as_deref())
-            .ok_or(Error::MissingValue)?;
+            .ok_or(Error::MissingValue(String::new()))?;
 
         visitor.visit_borrowed_str(value)
     }
@@ -398,11 +405,11 @@ where
             let value = self
                 .get_cur_cell_data()
                 .and_then(|v| v.formatted_value.as_deref())
-                .ok_or(Error::MissingValue)?;
+                .ok_or(Error::MissingValue(String::new()))?;
 
             visitor.visit_borrowed_str(value)
         } else {
-            visitor.visit_borrowed_str(self.cur_type.ok_or(Error::MissingValue)?)
+            visitor.visit_borrowed_str(self.cur_type.ok_or(Error::MissingValue(String::new()))?)
         }
     }
 

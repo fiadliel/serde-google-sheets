@@ -18,7 +18,7 @@ pub enum Error {
 
     HeaderMustBeString,
 
-    MissingValue,
+    MissingValue(String),
 
     NotNumber(Option<String>),
 
@@ -56,7 +56,10 @@ impl Display for Error {
             Error::HeaderMustBeString => formatter.write_str("header cell must be of string type"),
             Error::Message(msg) => formatter.write_str(msg),
             Error::Eof => formatter.write_str("unexpected end of input"),
-            Error::MissingValue => formatter.write_str("expected value but it wasn't present"),
+            Error::MissingValue(s) => formatter.write_fmt(format_args!(
+                "expected value but it wasn't present, ctx: {}",
+                s
+            )),
             Error::NotNumber(s) => {
                 formatter.write_fmt(format_args!("expected number value, found {:?}", s))
             }
