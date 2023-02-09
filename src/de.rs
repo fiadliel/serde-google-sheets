@@ -94,7 +94,8 @@ where
     }
 
     fn get_cur_cell_data(&mut self) -> Option<&'de CellData> {
-        self.get_cur_row_data().get(self.key_idx.unwrap())
+        self.key_idx
+            .and_then(|idx| self.get_cur_row_data().get(idx))
     }
 
     fn get_cur_effective_value(&mut self) -> Option<&'de ExtendedValue> {
@@ -271,7 +272,7 @@ where
         let value = self
             .get_cur_cell_data()
             .and_then(|v| v.formatted_value.as_deref())
-            .unwrap();
+            .ok_or(Error::MissingValue)?;
 
         visitor.visit_borrowed_str(value)
     }
@@ -397,11 +398,11 @@ where
             let value = self
                 .get_cur_cell_data()
                 .and_then(|v| v.formatted_value.as_deref())
-                .unwrap();
+                .ok_or(Error::MissingValue)?;
 
             visitor.visit_borrowed_str(value)
         } else {
-            visitor.visit_borrowed_str(self.cur_type.unwrap())
+            visitor.visit_borrowed_str(self.cur_type.ok_or(Error::MissingValue)?)
         }
     }
 
