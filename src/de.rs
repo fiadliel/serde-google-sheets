@@ -348,18 +348,21 @@ where
     where
         V: Visitor<'de>,
     {
-        if self.get_cur_effective_value().is_none() {
-            visitor.visit_none()
-        } else {
-            if self.key_idx.is_none()
-                && self
-                    .get_cur_row_data()
-                    .iter()
-                    .fold(true, |acc, cell| acc & cell.effective_value.is_none())
+        if self.key_idx.is_none() {
+            if self
+                .get_cur_row_data()
+                .iter()
+                .fold(true, |acc, cell| acc & cell.effective_value.is_none())
             {
                 visitor.visit_none()
             } else {
                 visitor.visit_some(self)
+            }
+        } else {
+            if self.get_cur_effective_value().is_some() {
+                visitor.visit_some(self)
+            } else {
+                visitor.visit_none()
             }
         }
     }
@@ -668,6 +671,33 @@ fn test_simple() {
     }];
 
     let result: Vec<Test> = from_grid_data(&data).unwrap();
+
+    assert_eq!(expected, result)
+}
+
+#[test]
+fn test_empty() {
+    #[derive(Deserialize, PartialEq, Debug)]
+    struct Test {
+        col1: String,
+        col2: String,
+    }
+
+    let data = grid_data(vec![
+        vec![string_cell("col1"), string_cell("col2")],
+        vec![string_cell("v1"), string_cell("v2")],
+        vec![CellData::default(), CellData::default()],
+    ]);
+
+    let expected = vec![
+        Some(Test {
+            col1: "v1".to_owned(),
+            col2: "v2".to_owned(),
+        }),
+        None,
+    ];
+
+    let result: Vec<Option<Test>> = from_grid_data(&data).unwrap();
 
     assert_eq!(expected, result)
 }
