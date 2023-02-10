@@ -170,42 +170,54 @@ where
     where
         V: Visitor<'de>,
     {
-        match self.get_cur_effective_value() {
-            Some(ExtendedValue {
-                bool_value: Some(v),
-                ..
-            }) => visitor.visit_bool(v.to_owned()),
-            Some(ExtendedValue {
-                error_value: Some(_),
-                ..
-            }) => visitor.visit_borrowed_str(self.deserialize_formatted_value()?),
-            Some(ExtendedValue {
-                formula_value: Some(_),
-                ..
-            }) => visitor.visit_borrowed_str(self.deserialize_formatted_value()?),
-            Some(ExtendedValue {
-                number_value: Some(v),
-                ..
-            }) => {
-                match self
-                    .get_cur_cell_data()
-                    .and_then(|v| v.effective_format.as_ref())
-                    .and_then(|v| v.number_format.as_ref())
-                    .and_then(|v| v.type_.as_ref())
-                    .map(|v| v.as_str())
-                {
-                    Some("DATE" | "TIME" | "DATE_TIME") => {
-                        visitor.visit_borrowed_str(self.deserialize_formatted_value()?)
-                    }
-                    _ => visitor.visit_f64(v.to_owned()),
-                }
+        if self.key_idx.is_none() {
+            if self
+                .get_cur_row_data()
+                .iter()
+                .fold(true, |acc, cell| acc & cell.effective_value.is_none())
+            {
+                visitor.visit_none()
+            } else {
+                visitor.visit_some(self)
             }
-            Some(ExtendedValue {
-                string_value: Some(v),
-                ..
-            }) => visitor.visit_borrowed_str(v),
-            Some(_) => todo!(),
-            None => visitor.visit_none(),
+        } else {
+            match self.get_cur_effective_value() {
+                Some(ExtendedValue {
+                    bool_value: Some(v),
+                    ..
+                }) => visitor.visit_bool(v.to_owned()),
+                Some(ExtendedValue {
+                    error_value: Some(_),
+                    ..
+                }) => visitor.visit_borrowed_str(self.deserialize_formatted_value()?),
+                Some(ExtendedValue {
+                    formula_value: Some(_),
+                    ..
+                }) => visitor.visit_borrowed_str(self.deserialize_formatted_value()?),
+                Some(ExtendedValue {
+                    number_value: Some(v),
+                    ..
+                }) => {
+                    match self
+                        .get_cur_cell_data()
+                        .and_then(|v| v.effective_format.as_ref())
+                        .and_then(|v| v.number_format.as_ref())
+                        .and_then(|v| v.type_.as_ref())
+                        .map(|v| v.as_str())
+                    {
+                        Some("DATE" | "TIME" | "DATE_TIME") => {
+                            visitor.visit_borrowed_str(self.deserialize_formatted_value()?)
+                        }
+                        _ => visitor.visit_f64(v.to_owned()),
+                    }
+                }
+                Some(ExtendedValue {
+                    string_value: Some(v),
+                    ..
+                }) => visitor.visit_borrowed_str(v),
+                Some(_) => todo!(),
+                None => visitor.visit_none(),
+            }
         }
     }
 
