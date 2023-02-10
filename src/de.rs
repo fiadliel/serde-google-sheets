@@ -336,9 +336,19 @@ where
     where
         V: Visitor<'de>,
     {
-        match self.get_cur_effective_value() {
-            None => visitor.visit_none(),
-            Some(_) => visitor.visit_some(self),
+        if self.get_cur_effective_value().is_none() {
+            visitor.visit_none()
+        } else {
+            if self.key_idx.is_none()
+                && self
+                    .get_cur_row_data()
+                    .iter()
+                    .fold(true, |acc, cell| acc & cell.effective_value.is_none())
+            {
+                visitor.visit_none()
+            } else {
+                visitor.visit_some(self)
+            }
         }
     }
 
