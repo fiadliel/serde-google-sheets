@@ -9,6 +9,7 @@ use serde::de::{
     Visitor,
 };
 use serde::Deserialize;
+use tracing::instrument;
 
 pub struct Deserializer<'de, I>
 where
@@ -22,6 +23,7 @@ where
     parsing_enum: bool,
 }
 
+#[instrument(skip(sheets))]
 pub async fn from_spreadsheet<T>(
     sheets: &google_sheets4::Sheets<HttpsConnector<HttpConnector>>,
     spreadsheet_id: &str,
@@ -52,6 +54,7 @@ where
     from_grid_data(grid_data)
 }
 
+#[instrument(skip(grid_data))]
 pub fn from_grid_data<'a, T>(grid_data: &'a GridData) -> Result<T>
 where
     T: Deserialize<'a>,
@@ -166,6 +169,7 @@ where
 {
     type Error = Error;
 
+    #[instrument(skip(self, visitor))]
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -535,6 +539,7 @@ where
 {
     type Error = Error;
 
+    #[instrument(skip(self, seed))]
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
     where
         T: DeserializeSeed<'de>,
