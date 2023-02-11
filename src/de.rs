@@ -169,7 +169,6 @@ where
 {
     type Error = Error;
 
-    #[instrument(skip(self, visitor))]
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
@@ -539,7 +538,7 @@ where
 {
     type Error = Error;
 
-    #[instrument(skip(self, seed))]
+    #[instrument(skip(self, seed), fields(has_next_row = self.rows.peek().is_some(), next_row = self.row_idx + 1))]
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
     where
         T: DeserializeSeed<'de>,
