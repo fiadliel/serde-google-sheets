@@ -619,14 +619,14 @@ where
     where
         V: Visitor<'de>,
     {
-        Err((de::Error::custom("Tuple variant not supported")))
+        Err(de::Error::custom("Tuple variant not supported"))
     }
 
     fn struct_variant<V>(self, _fields: &'static [&'static str], _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        Err((de::Error::custom("Struct variant not supported")))
+        Err(de::Error::custom("Struct variant not supported"))
     }
 }
 
