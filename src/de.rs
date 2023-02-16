@@ -218,7 +218,7 @@ where
                     string_value: Some(v),
                     ..
                 }) => visitor.visit_borrowed_str(v),
-                Some(_) => todo!(),
+                Some(_) => visitor.visit_none(),
                 None => visitor.visit_none(),
             }
         }
@@ -305,7 +305,7 @@ where
     where
         V: Visitor<'de>,
     {
-        todo!()
+        Err(de::Error::custom("Char type not supported"))
     }
 
     fn deserialize_str<V>(self, visitor: V) -> Result<V::Value>
@@ -337,14 +337,14 @@ where
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        Err(de::Error::custom("Bytes type not supported"))
     }
 
     fn deserialize_byte_buf<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        Err(de::Error::custom("Byte buf type not supported"))
     }
 
     fn deserialize_option<V>(self, visitor: V) -> Result<V::Value>
@@ -619,14 +619,14 @@ where
     where
         V: Visitor<'de>,
     {
-        todo!()
+        Err(de::Error::custom("Tuple variant not supported"))
     }
 
     fn struct_variant<V>(self, _fields: &'static [&'static str], _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        todo!()
+        Err(de::Error::custom("Struct variant not supported"))
     }
 }
 
